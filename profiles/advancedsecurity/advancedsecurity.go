@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/videonext/onvif/soap"
+	"github.com/thanhld9x/onvif/soap"
 )
 
 // against "unused imports"

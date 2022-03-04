@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/kr/pretty"
-	"github.com/videonext/onvif/discovery"
-	"github.com/videonext/onvif/profiles/devicemgmt"
-	"github.com/videonext/onvif/soap"
+	"github.com/thanhld9x/onvif/discovery"
+	"github.com/thanhld9x/onvif/profiles/devicemgmt"
+	"github.com/thanhld9x/onvif/soap"
 )
 
 func main() {

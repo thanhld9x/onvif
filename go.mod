@@ -1,4 +1,4 @@
-module github.com/videonext/onvif
+module github.com/thanhld9x/onvif
 
 go 1.12
 

@@ -3,7 +3,7 @@ package uplink
 import (
 	"context"
 	"encoding/xml"
-	"github.com/videonext/onvif/soap"
+	"github.com/thanhld9x/onvif/soap"
 	"time"
 )
 

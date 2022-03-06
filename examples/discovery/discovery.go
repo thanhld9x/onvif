@@ -31,7 +31,7 @@ func main() {
 	client := soap.NewClient(
 		soap.WithTimeout(time.Second * 5),
 	)
-	client.AddHeader(soap.NewWSSSecurityHeader("root", "rootpass"))
+	client.AddHeader(soap.NewWSSSecurityHeader("admin", "123456789aA", time.Now()))
 
 	for _, d := range devices {
 		// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)

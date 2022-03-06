@@ -15,9 +15,12 @@ var errWrongDiscoveryResponse = errors.New("Response is not related to discovery
 
 // Device contains data of ONVIF camera
 type Device struct {
-	ID    string
-	Name  string
-	XAddr string
+	ID      string
+	Name    string
+	XAddr   string
+	Address string
+	Port    int
+	IPType  string
 }
 
 // StartDiscovery send a WS-Discovery message and wait for all matching device to respond
@@ -136,7 +139,7 @@ func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 	for {
 		// Create buffer and receive UDP response
 		buffer := make([]byte, 10*1024)
-		_, _, err = conn.ReadFromUDP(buffer)
+		_, addr, err := conn.ReadFromUDP(buffer)
 
 		//fmt.Println(string(buffer))
 		//		pretty.Println(buffer)
@@ -150,7 +153,7 @@ func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 		}
 
 		// Read and parse WS-Discovery response
-		device, err := readDiscoveryResponse(requestID, buffer)
+		device, err := readDiscoveryResponse(requestID, buffer, addr)
 		if err != nil && err != errWrongDiscoveryResponse {
 			return discoveryResults, err
 		}
@@ -163,7 +166,7 @@ func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 }
 
 // readDiscoveryResponse reads and parses WS-Discovery response
-func readDiscoveryResponse(messageID string, buffer []byte) (Device, error) {
+func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (Device, error) {
 	// Inital result
 	result := Device{}
 
@@ -181,11 +184,11 @@ func readDiscoveryResponse(messageID string, buffer []byte) (Device, error) {
 		return result, errWrongDiscoveryResponse
 	}
 
-	// Get device's ID and clean it
+	// Get devices ID and clean it
 	deviceID, _ := mapXML.ValueForPathString("Envelope.Body.ProbeMatches.ProbeMatch.EndpointReference.Address")
 	deviceID = strings.Replace(deviceID, "urn:uuid:", "", 1)
 
-	// Get device's name
+	// Get devices name
 	deviceName := ""
 	scopes, _ := mapXML.ValueForPathString("Envelope.Body.ProbeMatches.ProbeMatch.Scopes")
 	for _, scope := range strings.Split(scopes, " ") {
@@ -196,7 +199,7 @@ func readDiscoveryResponse(messageID string, buffer []byte) (Device, error) {
 		}
 	}
 
-	// Get device's xAddrs
+	// Get devices xAddrs
 	xAddrs, _ := mapXML.ValueForPathString("Envelope.Body.ProbeMatches.ProbeMatch.XAddrs")
 	listXAddr := strings.Split(xAddrs, " ")
 	if len(listXAddr) == 0 {
@@ -207,6 +210,13 @@ func readDiscoveryResponse(messageID string, buffer []byte) (Device, error) {
 	result.ID = deviceID
 	result.Name = deviceName
 	result.XAddr = listXAddr[0]
+	result.Address = addr.IP.String()
+	result.Port = addr.Port
+	if addr.IP.To4() != nil {
+		result.IPType = "IPv4"
+	} else {
+		result.IPType = "IPv6"
+	}
 
 	return result, nil
 }

@@ -2,13 +2,11 @@ package discovery
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/clbanning/mxj"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -175,8 +173,6 @@ func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (Device, error) {
 	// Inital result
 	result := Device{}
-
-	fmt.Println(string(buffer))
 
 	// Parse XML to map
 	mapXML, err := mxj.NewMapXml(buffer)

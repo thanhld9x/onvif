@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"regexp"
 	"strings"
@@ -15,12 +16,17 @@ var errWrongDiscoveryResponse = errors.New("Response is not related to discovery
 
 // Device contains data of ONVIF camera
 type Device struct {
-	ID      string
-	Name    string
-	XAddr   string
-	Address string
-	Port    int
-	IPType  string
+	ID       string
+	Name     string
+	XAddr    string
+	Address  string
+	Port     int
+	IPType   string
+	Mac      string
+	Type     []string
+	Profile  []string
+	Hardware string
+	Location string
 }
 
 // StartDiscovery send a WS-Discovery message and wait for all matching device to respond
@@ -170,7 +176,7 @@ func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (
 	// Inital result
 	result := Device{}
 
-	//	fmt.Println("!!!!readDiscoveryResponse")
+	fmt.Println(string(buffer))
 
 	// Parse XML to map
 	mapXML, err := mxj.NewMapXml(buffer)
@@ -190,12 +196,26 @@ func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (
 
 	// Get devices name
 	deviceName := ""
+	mac := ""
+	hardware := ""
+	location := ""
+	profiles := make([]string, 0)
+	types := make([]string, 0)
 	scopes, _ := mapXML.ValueForPathString("Envelope.Body.ProbeMatches.ProbeMatch.Scopes")
 	for _, scope := range strings.Split(scopes, " ") {
 		if strings.HasPrefix(scope, "onvif://www.onvif.org/name/") {
 			deviceName = strings.Replace(scope, "onvif://www.onvif.org/name/", "", 1)
 			deviceName = strings.Replace(deviceName, "_", " ", -1)
-			break
+		} else if strings.HasPrefix(scope, "onvif://www.onvif.org/MAC/") {
+			mac = strings.Replace(scope, "onvif://www.onvif.org/MAC/", "", 1)
+		} else if strings.HasPrefix(scope, "onvif://www.onvif.org/hardware/") {
+			hardware = strings.Replace(scope, "onvif://www.onvif.org/hardware/", "", 1)
+		} else if strings.HasPrefix(scope, "onvif://www.onvif.org/location/") {
+			location = strings.Replace(scope, "onvif://www.onvif.org/location/", "", 1)
+		} else if strings.HasPrefix(scope, "onvif://www.onvif.org/Profile/") {
+			profiles = append(profiles, strings.Replace(scope, "onvif://www.onvif.org/Profile/", "", 1))
+		} else if strings.HasPrefix(scope, "onvif://www.onvif.org/type/") {
+			types = append(types, strings.Replace(scope, "onvif://www.onvif.org/type/", "", 1))
 		}
 	}
 
@@ -212,6 +232,12 @@ func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (
 	result.XAddr = listXAddr[0]
 	result.Address = addr.IP.String()
 	result.Port = addr.Port
+	result.Mac = mac
+	result.Hardware = hardware
+	result.Location = location
+	result.Profile = profiles
+	result.Type = types
+
 	if addr.IP.To4() != nil {
 		result.IPType = "IPv4"
 	} else {

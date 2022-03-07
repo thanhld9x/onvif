@@ -778,6 +778,8 @@ type MediaProfile struct {
 	// A value of true signals that the profile cannot be deleted. Default is false.
 
 	Fixed bool `xml:"fixed,attr,omitempty"`
+
+	VideoEncoder VideoEncoder2Configuration `xml:"http://www.onvif.org/ver20/media/wsdl VideoEncoderConfiguration,omitempty"`
 }
 
 // GetConfiguration type

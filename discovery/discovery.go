@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"errors"
+	"github.com/clbanning/mxj"
 	"net"
 	"regexp"
 	"strings"

@@ -82,26 +82,22 @@ func StartDiscovery(duration time.Duration) ([]Device, error) {
 
 func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 	// Create WS-Discovery request
-	requestID := "uuid:" + uuid.NewV4().String()
+	requestID := "urn:uuid:" + uuid.NewV4().String()
 	request := `		
 		<?xml version="1.0" encoding="UTF-8"?>
-		<e:Envelope
-		    xmlns:e="http://www.w3.org/2003/05/soap-envelope"
-		    xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing"
-		    xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"
-		    xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
-		    <e:Header>
-		        <w:MessageID>` + requestID + `</w:MessageID>
-		        <w:To e:mustUnderstand="true">urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To>
-		        <w:Action a:mustUnderstand="true">http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe
-		        </w:Action>
-		    </e:Header>
-		    <e:Body>
-		        <d:Probe>
-		            <d:Types>dn:NetworkVideoTransmitter</d:Types>
-		        </d:Probe>
-		    </e:Body>
-		</e:Envelope>`
+			<Envelope xmlns="http://www.w3.org/2003/05/soap-envelope" xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
+			   <Header>
+				  <wsa:MessageID xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">` + requestID + `</wsa:MessageID>
+				  <wsa:To xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>
+				  <wsa:Action xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>
+			   </Header>
+			   <Body>
+				  <Probe xmlns="http://schemas.xmlsoap.org/ws/2005/04/discovery" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+					 <Types>dn:NetworkVideoTransmitter</Types>
+					 <Scopes />
+				  </Probe>
+			   </Body>
+			</Envelope>`
 
 	// Clean WS-Discovery message
 	request = regexp.MustCompile(`\>\s+\<`).ReplaceAllString(request, "><")

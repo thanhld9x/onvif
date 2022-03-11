@@ -409,6 +409,11 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	if err != nil {
 		return err
 	}
+	//body, err := ioutil.ReadAll(res.Body)
+	//if err != nil {
+	//	return err
+	//}
+	//fmt.Println(string(body))
 	defer res.Body.Close()
 
 	respEnvelope := new(SOAPEnvelope)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/thanhld9x/onvif/profiles/analytics"
 	"github.com/thanhld9x/onvif/profiles/media2"
 	"log"
 	"time"
@@ -34,11 +35,26 @@ func main() {
 	client.AddHeader(soap.NewWSSSecurityHeader("admin", "123456789aA", time.Now()))
 
 	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
-	dev := media2.NewMedia2(client, "http://192.168.2.22/onvif/Media")
+	mediaDev := media2.NewMedia2(client, "http://192.168.2.22/onvif/Media")
 
-	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Media2")
+	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Events")
 	{
-		reply, err := dev.GetProfiles(&media2.GetProfiles{})
+		reply, err := mediaDev.GetProfiles(&media2.GetProfiles{})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		pretty.Println(reply)
+	}
+
+	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
+	dev := analytics.NewAnalyticsEnginePort(client, "http://192.168.2.22/onvif/Analytics")
+
+	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Events")
+	{
+		reply, err := dev.GetSupportedAnalyticsModules(&analytics.GetSupportedAnalyticsModules{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)

@@ -3,6 +3,7 @@ package discovery
 import (
 	"errors"
 	"github.com/clbanning/mxj"
+	"github.com/thanhld9x/arp"
 	"net"
 	"regexp"
 	"strings"
@@ -225,6 +226,10 @@ func readDiscoveryResponse(messageID string, buffer []byte, addr *net.UDPAddr) (
 	result.XAddr = listXAddr[0]
 	result.Address = addr.IP.String()
 	result.Port = addr.Port
+
+	if mac == "" {
+		mac = arp.Search(result.Address)
+	}
 	result.Mac = mac
 	result.Hardware = hardware
 	result.Location = location

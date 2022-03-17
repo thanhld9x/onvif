@@ -43,7 +43,7 @@ type CreatePullPointSubscriptionResponse struct {
 	XMLName xml.Name `xml:"CreatePullPointSubscriptionResponse"`
 
 	// Endpoint reference of the subscription to be used for pulling the messages.
-	SubscriptionReference EndpointReferenceType `xml:"SubscriptionReference,omitempty"`
+	SubscriptionReference SubscriptionReference `xml:"SubscriptionReference,omitempty"`
 
 	CurrentTime CurrentTime `xml:"CurrentTime,omitempty"`
 
@@ -245,6 +245,13 @@ type EndpointReferenceType struct {
 	Metadata Metadata `xml:"Metadata,omitempty"`
 }
 
+// EndpointReferenceType type
+type SubscriptionReferenceType struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver10/events/wsdl SubscriptionReference"`
+
+	Address AnyURI `xml:"http://www.onvif.org/ver10/schema Address,omitempty"`
+}
+
 // ReferenceParametersType type
 type ReferenceParametersType struct {
 }
@@ -398,7 +405,7 @@ type SubscriptionPolicy SubscriptionPolicyType
 type CreationTime time.Time
 
 // SubscriptionReference type
-type SubscriptionReference EndpointReferenceType
+type SubscriptionReference SubscriptionReferenceType
 
 // Topic type
 type Topic TopicExpressionType
@@ -524,14 +531,39 @@ type SubscriptionPolicyType struct {
 type NotificationMessageHolderType struct {
 	XMLName xml.Name `xml:"http://docs.oasis-open.org/wsn/b-2 NotificationMessage"`
 
-	SubscriptionReference SubscriptionReference `xml:"SubscriptionReference,omitempty"`
+	// SubscriptionReference SubscriptionReference `xml:"SubscriptionReference,omitempty"`
 
-	Topic Topic `xml:"Topic,omitempty"`
+	Topic string `xml:"Topic,omitempty"`
 
-	ProducerReference ProducerReference `xml:"ProducerReference,omitempty"`
+	// ProducerReference ProducerReference `xml:"ProducerReference,omitempty"`
 
-	Message struct {
-	} `xml:"Message,omitempty"`
+	Message NotificationMessageType `xml:"Message,omitempty"`
+}
+
+type NotificationMessageType struct {
+	XMLName xml.Name                      `xml:"http://docs.oasis-open.org/wsn/b-2 Message"`
+	Message NotificationMessageDetailType `xml:"Message"`
+}
+
+type NotificationMessageDetailType struct {
+	XMLName xml.Name               `xml:"http://www.onvif.org/ver10/schema Message"`
+	Source  NotificationSourceType `xml:"Source,omitempty"`
+	Data    NotificationDataType   `xml:"Data,omitempty"`
+}
+
+type NotificationSourceType struct {
+	XMLName    xml.Name                            `xml:"http://www.onvif.org/ver10/schema Source"`
+	SimpleItem []NotificationMessageSimpleItemType `xml:"SimpleItem,omitempty"`
+}
+type NotificationDataType struct {
+	XMLName    xml.Name                            `xml:"http://www.onvif.org/ver10/schema Data"`
+	SimpleItem []NotificationMessageSimpleItemType `xml:"SimpleItem,omitempty"`
+}
+
+type NotificationMessageSimpleItemType struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver10/schema SimpleItem"`
+	Name    string   `xml:"Name,attr,omitempty"`
+	Value   string   `xml:"Value,attr,omitempty"`
 }
 
 // SubscribeCreationFailedFaultType type

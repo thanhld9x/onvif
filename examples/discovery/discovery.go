@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/thanhld9x/onvif/profiles/analytics"
-	"github.com/thanhld9x/onvif/profiles/media2"
+	"github.com/thanhld9x/onvif/profiles/devicemgmt"
 	"log"
 	"time"
 
@@ -35,11 +35,11 @@ func main() {
 	client.AddHeader(soap.NewWSSSecurityHeader("admin", "123456789aA", time.Now()))
 
 	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
-	mediaDev := media2.NewMedia2(client, "http://192.168.2.22/onvif/Media")
+	mediaDev := devicemgmt.NewDevice(client, devices[0].XAddr)
 
-	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Events")
+	log.Println("devicemgmt.NewDevice", devices[0].XAddr)
 	{
-		reply, err := mediaDev.GetProfiles(&media2.GetProfiles{})
+		reply, err := mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)
@@ -54,7 +54,21 @@ func main() {
 
 	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Events")
 	{
-		reply, err := dev.GetSupportedAnalyticsModules(&analytics.GetSupportedAnalyticsModules{})
+		reply, err := dev.GetAnalyticsModules(&analytics.GetAnalyticsModules{ConfigurationToken: "VideoAnalyticsToken"})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		pretty.Println(reply)
+	}
+
+	ruleDev := analytics.NewRuleEnginePort(client, "http://192.168.2.22/onvif/Analytics")
+
+	log.Println("devicemgmt.GetServices", "http://192.168.2.22/onvif/Events")
+	{
+		reply, err := ruleDev.GetSupportedRules(&analytics.GetSupportedRules{ConfigurationToken: "VideoAnalyticsToken"})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)

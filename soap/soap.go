@@ -414,6 +414,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	//	return err
 	//}
 	//fmt.Println(string(body))
+	//res.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	defer res.Body.Close()
 
 	respEnvelope := new(SOAPEnvelope)

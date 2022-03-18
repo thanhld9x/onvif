@@ -384,7 +384,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 
 	req.Header.Add("Content-Type", "application/soap+xml; charset=utf-8; action=\""+soapAction+"\"")
 	req.Header.Add("Soapaction", "\""+soapAction+"\"")
-	req.Header.Set("User-Agent", "videonext-onvif-go/0.1")
+	req.Header.Set("User-Agent", "onvif-go/0.1")
 	if s.opts.httpHeaders != nil {
 		for k, v := range s.opts.httpHeaders {
 			req.Header.Set(k, v)

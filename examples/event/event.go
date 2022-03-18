@@ -37,7 +37,11 @@ func main() {
 
 	log.Println("devicemgmt.GetEvent", "http://192.168.2.22/onvif/Events")
 	{
-		point, err := eventClient.CreatePullPointSubscription(&event.CreatePullPointSubscription{})
+		point, err := eventClient.CreatePullPointSubscription(&event.CreatePullPointSubscription{
+			Filter: event.FilterType{TopicExpression: event.TopicExpression{
+				Dialect: "http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet",
+				Value:   "tns1:RuleEngine//.",
+			}}})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)

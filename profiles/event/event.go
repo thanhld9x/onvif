@@ -34,8 +34,7 @@ type CreatePullPointSubscription struct {
 	// Initial termination time.
 	InitialTerminationTime AbsoluteOrRelativeTimeType `xml:"InitialTerminationTime,omitempty"`
 
-	SubscriptionPolicy struct {
-	} `xml:"SubscriptionPolicy,omitempty"`
+	SubscriptionPolicy SubscriptionPolicy `xml:"SubscriptionPolicy,omitempty"`
 }
 
 // CreatePullPointSubscriptionResponse type
@@ -515,11 +514,14 @@ type TopicExpressionType struct {
 	XMLName xml.Name `xml:"http://docs.oasis-open.org/wsn/b-2 TopicExpression"`
 
 	Dialect AnyURI `xml:"http://www.onvif.org/ver10/schema Dialect,attr,omitempty"`
+
+	Value string `xml:",chardata"`
 }
 
 // FilterType type
 type FilterType struct {
-	XMLName xml.Name `xml:"http://docs.oasis-open.org/wsn/b-2 Filter"`
+	XMLName         xml.Name        `xml:"http://docs.oasis-open.org/wsn/b-2 Filter"`
+	TopicExpression TopicExpression `xml:"TopicExpression"`
 }
 
 // SubscriptionPolicyType type

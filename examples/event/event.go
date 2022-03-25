@@ -37,27 +37,13 @@ func main() {
 
 	log.Println("devicemgmt.GetEvent", "http://192.168.2.22/onvif/Events")
 	{
-		point, err := eventClient.CreatePullPointSubscription(&event.CreatePullPointSubscription{
-			Filter: event.FilterType{TopicExpression: event.TopicExpression{
-				Dialect: "http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet",
-				Value:   "tns1:RuleEngine//.",
-			}}})
+		point, err := eventClient.GetServiceCapabilities(&event.GetServiceCapabilities{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)
 			}
 			log.Println("Request failed: %s", err.Error(), point)
 		}
-
-		listener := event.NewPullPointSubscription(client, string(point.SubscriptionReference.Address))
-		tmp, err := listener.PullMessages(&event.PullMessages{MessageLimit: 20})
-		if err != nil {
-			if serr, ok := err.(*soap.SOAPFault); ok {
-				pretty.Println(serr)
-			}
-			log.Fatalf("Request failed: %s", err.Error())
-		}
-		log.Fatalf("listener failed: %s", tmp)
 
 	}
 

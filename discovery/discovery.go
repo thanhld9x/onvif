@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/clbanning/mxj"
 	"github.com/thanhld9x/arp"
+	"log"
 	"net"
 	"regexp"
 	"strings"
@@ -32,10 +33,40 @@ type Device struct {
 // StartDiscovery send a WS-Discovery message and wait for all matching device to respond
 func StartDiscovery(duration time.Duration) ([]Device, error) {
 	// Get list of interface address
-	addrs, err := net.InterfaceAddrs()
+	discoveryResults := []Device{}
+	netInterfaces, err := net.Interfaces()
 	if err != nil {
 		return []Device{}, err
 	}
+
+	for _, netInterface := range netInterfaces {
+		devices, err := startDiscoveryOn(netInterface.Name, duration)
+		if err != nil {
+			log.Printf("startDiscoveryOn error: %v", err)
+			continue
+		}
+		discoveryResults = append(discoveryResults, devices...)
+
+	}
+
+	if len(discoveryResults) == 0 && err != nil {
+		return []Device{}, err
+	}
+
+	return discoveryResults, nil
+}
+
+func startDiscoveryOn(interfaceName string, duration time.Duration) ([]Device, error) {
+	itf, err := net.InterfaceByName(interfaceName) //here your interface
+	if err != nil {
+		return []Device{}, err
+	}
+
+	addrs, err := itf.Addrs()
+	if err != nil {
+		return []Device{}, err
+	}
+	discoveryResults := []Device{}
 
 	// Fetch IPv4 address
 	ipAddrs := []string{}
@@ -47,7 +78,6 @@ func StartDiscovery(duration time.Duration) ([]Device, error) {
 	}
 
 	// Create initial discovery results
-	discoveryResults := []Device{}
 
 	// Discover device on each interface's network
 	for _, ipAddr := range ipAddrs {
@@ -73,11 +103,6 @@ func StartDiscovery(duration time.Duration) ([]Device, error) {
 		}
 
 	}
-
-	if len(discoveryResults) == 0 && err != nil {
-		return []Device{}, err
-	}
-
 	return discoveryResults, nil
 }
 

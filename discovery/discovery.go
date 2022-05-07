@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/clbanning/mxj"
 	"github.com/thanhld9x/arp"
-	"log"
 	"net"
 	"regexp"
 	"strings"
@@ -33,40 +32,10 @@ type Device struct {
 // StartDiscovery send a WS-Discovery message and wait for all matching device to respond
 func StartDiscovery(duration time.Duration) ([]Device, error) {
 	// Get list of interface address
-	discoveryResults := []Device{}
-	netInterfaces, err := net.Interfaces()
+	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return []Device{}, err
 	}
-
-	for _, netInterface := range netInterfaces {
-		devices, err := startDiscoveryOn(netInterface.Name, duration)
-		if err != nil {
-			log.Printf("startDiscoveryOn error: %v", err)
-			continue
-		}
-		discoveryResults = append(discoveryResults, devices...)
-
-	}
-
-	if len(discoveryResults) == 0 && err != nil {
-		return []Device{}, err
-	}
-
-	return discoveryResults, nil
-}
-
-func startDiscoveryOn(interfaceName string, duration time.Duration) ([]Device, error) {
-	itf, err := net.InterfaceByName(interfaceName) //here your interface
-	if err != nil {
-		return []Device{}, err
-	}
-
-	addrs, err := itf.Addrs()
-	if err != nil {
-		return []Device{}, err
-	}
-	discoveryResults := []Device{}
 
 	// Fetch IPv4 address
 	ipAddrs := []string{}
@@ -78,6 +47,7 @@ func startDiscoveryOn(interfaceName string, duration time.Duration) ([]Device, e
 	}
 
 	// Create initial discovery results
+	discoveryResults := []Device{}
 
 	// Discover device on each interface's network
 	for _, ipAddr := range ipAddrs {
@@ -103,14 +73,18 @@ func startDiscoveryOn(interfaceName string, duration time.Duration) ([]Device, e
 		}
 
 	}
+
+	if len(discoveryResults) == 0 && err != nil {
+		return []Device{}, err
+	}
+
 	return discoveryResults, nil
 }
 
 func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 	// Create WS-Discovery request
 	requestID := "urn:uuid:" + uuid.NewV4().String()
-	request := `		
-		<?xml version="1.0" encoding="UTF-8"?>
+	request := `
 			<Envelope xmlns="http://www.w3.org/2003/05/soap-envelope" xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
 			   <Header>
 				  <wsa:MessageID xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">` + requestID + `</wsa:MessageID>

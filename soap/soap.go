@@ -7,8 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/xml"
-	"fmt"
-	"math/rand"
+	"github.com/thanhld9x/onvif/utils"
 	"net"
 	"net/http"
 	"reflect"
@@ -194,26 +193,28 @@ func NewWSSSecurityHeader(user, pass string, created time.Time) *WSSSecurityHead
 
 	// Created
 	if created.Year() != 0 {
-		hdr.UsernameToken.Created.Value = created.Format("2006-01-02T15:04:05.999") + "Z"
+		hdr.UsernameToken.Created.Value = created.UTC().Format(time.RFC3339Nano)
 		//fmt.Println("------", hdr.UsernameToken.Created.Value, created.Nanosecond())
 
 	} else {
-		hdr.UsernameToken.Created.Value = time.Now().Format("2006-01-02T15:04:05.999") + "Z"
+		hdr.UsernameToken.Created.Value = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 
+	nonce, _ := utils.NewUUIDVer4()
+	nonce64 := base64.StdEncoding.EncodeToString(nonce)
+	hasher := sha1.New()
+	hasher.Write(nonce)
+	hasher.Write([]byte(hdr.UsernameToken.Created.Value + pass))
+	shaToken := hasher.Sum(nil)
+	shaDigest64 := base64.StdEncoding.EncodeToString(shaToken)
+
 	// Nonce
-	b := make([]byte, 16)
-	rand.Read(b)
-	nonce := fmt.Sprintf("%x-%x-%x-%x-%x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 	hdr.UsernameToken.Nonce.EncodingType = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"
-	hdr.UsernameToken.Nonce.Value = base64.StdEncoding.EncodeToString([]byte(nonce))
+	hdr.UsernameToken.Nonce.Value = nonce64
 
 	// Password
-	h := sha1.New()
-	h.Write([]byte(nonce + hdr.UsernameToken.Created.Value + pass))
 	hdr.UsernameToken.Password.Type = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest"
-	hdr.UsernameToken.Password.Value = base64.StdEncoding.EncodeToString(h.Sum(nil))
+	hdr.UsernameToken.Password.Value = shaDigest64
 
 	return hdr
 }

@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/kr/pretty"
 	"github.com/thanhld9x/onvif/discovery"
+	"github.com/thanhld9x/onvif/profiles/devicemgmt"
+	"github.com/thanhld9x/onvif/soap"
+	"log"
 	"time"
 )
 
@@ -21,5 +25,28 @@ func main() {
 	//
 	fmt.Printf("Discovered %d devices\n", len(devices))
 	//pretty.Println(devices)
+
+	// Create soap client
+	client := soap.NewClient(
+		soap.WithTimeout(time.Second * 5),
+	)
+	client.AddHeader(soap.NewWSSSecurityHeader("broadflow", "Red57Covers", time.Now()))
+
+	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
+	mediaDev := devicemgmt.NewDevice(client, "http://73.245.135.144:8062/onvif/device_service")
+	// http://192.168.2.22/onvif/Media
+	// http://192.168.2.22/onvif/device_service
+	log.Println("devicemgmt.NewDevice")
+	{
+		reply, err := mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{Category: []devicemgmt.CapabilityCategory{devicemgmt.CapabilityCategoryAll}})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		pretty.Println(reply)
+
+	}
 
 }

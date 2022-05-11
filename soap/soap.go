@@ -3,11 +3,12 @@ package soap
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha1"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/xml"
-	"github.com/thanhld9x/onvif/utils"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -184,23 +185,30 @@ type WSSSecurityHeader struct {
 	UsernameToken WSSUsernameToken
 }
 
+func newUUIDVer4() ([]byte, error) {
+	u := new([16]byte)
+	if _, err := io.ReadFull(rand.Reader, u[:]); err != nil {
+		return u[:], err
+	}
+	// u.SetVersion(V4)
+	// u.SetVariant(VariantRFC4122)
+
+	return u[:], nil
+}
+
 // NewWSSSecurityHeader creates WSSSecurityHeader instance
-func NewWSSSecurityHeader(user, pass string, created time.Time) *WSSSecurityHeader {
+func NewWSSSecurityHeader(user, pass string, timeDiff time.Duration) *WSSSecurityHeader {
+
 	hdr := &WSSSecurityHeader{MustUnderstand: "1"}
 
 	// Username
 	hdr.UsernameToken.Username = user
 
 	// Created
-	if created.Year() != 0 {
-		hdr.UsernameToken.Created.Value = created.UTC().Format(time.RFC3339Nano)
-		//fmt.Println("------", hdr.UsernameToken.Created.Value, created.Nanosecond())
 
-	} else {
-		hdr.UsernameToken.Created.Value = time.Now().UTC().Format(time.RFC3339Nano)
-	}
+	hdr.UsernameToken.Created.Value = time.Now().UTC().Add(timeDiff).Format(time.RFC3339Nano)
 
-	nonce, _ := utils.NewUUIDVer4()
+	nonce, _ := newUUIDVer4()
 	nonce64 := base64.StdEncoding.EncodeToString(nonce)
 	hasher := sha1.New()
 	hasher.Write(nonce)
@@ -368,6 +376,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	if err := encoder.Encode(envelope); err != nil {
 		return err
 	}
+	//fmt.Println(buffer.String())
 
 	if err := encoder.Flush(); err != nil {
 		return err
@@ -383,9 +392,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 
 	req.WithContext(ctx)
 
-	req.Header.Add("Content-Type", "application/soap+xml; charset=utf-8; action=\""+soapAction+"\"")
-	req.Header.Add("Soapaction", "\""+soapAction+"\"")
-	req.Header.Set("User-Agent", "onvif-go/0.1")
+	req.Header.Add("Content-Type", "application/soap+xml; charset=utf-8")
 	if s.opts.httpHeaders != nil {
 		for k, v := range s.opts.httpHeaders {
 			req.Header.Set(k, v)

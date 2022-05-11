@@ -30,7 +30,6 @@ func main() {
 	client := soap.NewClient(
 		soap.WithTimeout(time.Second * 5),
 	)
-	client.AddHeader(soap.NewWSSSecurityHeader("broadflow", "Red57Covers", time.Now()))
 
 	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
 	mediaDev := devicemgmt.NewDevice(client, "http://73.245.135.144:8062/onvif/device_service")
@@ -38,14 +37,24 @@ func main() {
 	// http://192.168.2.22/onvif/device_service
 	log.Println("devicemgmt.NewDevice")
 	{
-		reply, err := mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{Category: []devicemgmt.CapabilityCategory{devicemgmt.CapabilityCategoryAll}})
+		systemDateAndTimeResponse, err := mediaDev.GetSystemDateAndTime(&devicemgmt.GetSystemDateAndTime{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)
 			}
 			log.Fatalf("Request failed: %s", err.Error())
 		}
-		pretty.Println(reply)
+		deviceTime, _ := systemDateAndTimeResponse.SystemDateAndTime.GetUTCTime()
+		timeDiff := deviceTime.Sub(time.Now().UTC())
+		client.AddHeader(soap.NewWSSSecurityHeader("broadflow", "Red57Covers", timeDiff))
+
+		_, err = mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
 
 	}
 

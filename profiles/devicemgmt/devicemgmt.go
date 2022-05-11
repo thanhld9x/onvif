@@ -3,6 +3,7 @@ package devicemgmt
 import (
 	"context"
 	"encoding/xml"
+	"github.com/thanhld9x/onvif/utils"
 	"time"
 
 	"github.com/thanhld9x/onvif/soap"
@@ -5417,7 +5418,7 @@ type SystemDateTime struct {
 	TimeZone TimeZone `xml:"http://www.onvif.org/ver10/device/wsdl TimeZone,omitempty"`
 
 	// Current system date and time in UTC format. This field is mandatory since version 2.0.
-	UTCDateTime DateTime `xml:"UTCDateTime,omitempty"`
+	UTCDateTime *DateTime `xml:"UTCDateTime,omitempty"`
 
 	// Date and time in local format.
 	LocalDateTime DateTime `xml:"LocalDateTime,omitempty"`
@@ -5434,6 +5435,13 @@ type DateTime struct {
 	Time Time `xml:"Time,omitempty"`
 
 	Date Date `xml:"Date,omitempty"`
+}
+
+func (d *DateTime) getTime() time.Time {
+	return time.Date(
+		int(d.Date.Year), time.Month(d.Date.Month), int(d.Date.Day),
+		int(d.Time.Hour), int(d.Time.Minute), int(d.Time.Second), 0,
+		time.UTC)
 }
 
 // Date type
@@ -10306,6 +10314,19 @@ func (service *device) DeleteGeoLocation(request *DeleteGeoLocation) (*DeleteGeo
 		context.Background(),
 		request,
 	)
+}
+
+func (d *SystemDateTime) GetUTCTime() (time.Time, error) {
+	if d.UTCDateTime != nil {
+		return d.UTCDateTime.getTime(), nil
+	}
+
+	tz, err := utils.ParsePosixTimezone(string(d.TimeZone.TZ))
+	if err != nil {
+		return time.Now().UTC(), err
+	}
+
+	return tz.LocalToUTC(d.LocalDateTime.getTime()), nil
 }
 
 // AnyURI type

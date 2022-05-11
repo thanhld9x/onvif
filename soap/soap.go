@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -238,6 +239,7 @@ type options struct {
 	timeout          time.Duration
 	contimeout       time.Duration
 	tlshshaketimeout time.Duration
+	timeDiff         time.Duration
 	client           HTTPClient
 	httpHeaders      map[string]string
 }
@@ -257,6 +259,12 @@ type Option func(*options)
 func WithHTTPClient(c HTTPClient) Option {
 	return func(o *options) {
 		o.client = c
+	}
+}
+
+func WithTimeDiff(t time.Duration) Option {
+	return func(o *options) {
+		o.timeDiff = t
 	}
 }
 
@@ -307,7 +315,8 @@ func WithHTTPHeaders(headers map[string]string) Option {
 
 // Client is soap client
 type Client struct {
-	opts    *options
+	opts *options
+
 	headers []interface{}
 }
 
@@ -325,6 +334,12 @@ func NewClient(opt ...Option) *Client {
 	}
 	return &Client{
 		opts: &opts,
+	}
+}
+
+func (s *Client) UpdateOption(opt ...Option) {
+	for _, o := range opt {
+		o(s.opts)
 	}
 }
 
@@ -368,6 +383,12 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 		envelope.Header.Headers = s.headers
 	}
 
+	if s.headers != nil && s.opts.auth != nil {
+		s.ReplaceHeader(NewWSSSecurityHeader(s.opts.auth.Login, s.opts.auth.Password, s.opts.timeDiff))
+	} else if s.headers == nil && s.opts.auth != nil {
+		s.AddHeader(NewWSSSecurityHeader(s.opts.auth.Login, s.opts.auth.Password, s.opts.timeDiff))
+	}
+
 	envelope.Body.Content = request
 	buffer := new(bytes.Buffer)
 	var encoder SOAPEncoder
@@ -376,7 +397,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	if err := encoder.Encode(envelope); err != nil {
 		return err
 	}
-	//fmt.Println(buffer.String())
+	fmt.Println(buffer.String())
 
 	if err := encoder.Flush(); err != nil {
 		return err
@@ -386,9 +407,9 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	if err != nil {
 		return err
 	}
-	if s.opts.auth != nil {
-		req.SetBasicAuth(s.opts.auth.Login, s.opts.auth.Password)
-	}
+	//if s.opts.auth != nil {
+	//	req.SetBasicAuth(s.opts.auth.Login, s.opts.auth.Password)
+	//}
 
 	req.WithContext(ctx)
 

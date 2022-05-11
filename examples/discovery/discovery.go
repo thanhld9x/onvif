@@ -28,7 +28,8 @@ func main() {
 
 	// Create soap client
 	client := soap.NewClient(
-		soap.WithTimeout(time.Second * 5),
+		soap.WithTimeout(time.Second*5),
+		soap.WithBasicAuth("broadflow", "Red57Covers"),
 	)
 
 	// Create devicemgmt service instance and specify xaddr (which could be received in the discovery)
@@ -46,6 +47,8 @@ func main() {
 		}
 		deviceTime, _ := systemDateAndTimeResponse.SystemDateAndTime.GetUTCTime()
 		timeDiff := deviceTime.Sub(time.Now().UTC())
+		client.UpdateOption(soap.WithTimeDiff(timeDiff))
+
 		client.AddHeader(soap.NewWSSSecurityHeader("broadflow", "Red57Covers", timeDiff))
 
 		_, err = mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{})
@@ -55,6 +58,15 @@ func main() {
 			}
 			log.Fatalf("Request failed: %s", err.Error())
 		}
+
+		replyDevice, err := mediaDev.GetDeviceInformation(&devicemgmt.GetDeviceInformation{})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		fmt.Println(replyDevice)
 
 	}
 

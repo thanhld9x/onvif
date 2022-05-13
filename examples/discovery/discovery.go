@@ -5,6 +5,7 @@ import (
 	"github.com/kr/pretty"
 	"github.com/thanhld9x/onvif/discovery"
 	"github.com/thanhld9x/onvif/profiles/devicemgmt"
+	"github.com/thanhld9x/onvif/profiles/media"
 	"github.com/thanhld9x/onvif/soap"
 	"log"
 	"time"
@@ -49,9 +50,16 @@ func main() {
 		timeDiff := deviceTime.Sub(time.Now().UTC())
 		client.UpdateOption(soap.WithTimeDiff(timeDiff))
 
-		client.AddHeader(soap.NewWSSSecurityHeader("broadflow", "Red57Covers", timeDiff))
+		capacites, err := mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		fmt.Println(capacites)
 
-		_, err = mediaDev.GetCapabilities(&devicemgmt.GetCapabilities{})
+		replyDevice, err := mediaDev.GetServices(&devicemgmt.GetServices{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)
@@ -59,7 +67,7 @@ func main() {
 			log.Fatalf("Request failed: %s", err.Error())
 		}
 
-		replyDevice, err := mediaDev.GetDeviceInformation(&devicemgmt.GetDeviceInformation{})
+		_, err = mediaDev.GetAccessPolicy(&devicemgmt.GetAccessPolicy{})
 		if err != nil {
 			if serr, ok := err.(*soap.SOAPFault); ok {
 				pretty.Println(serr)
@@ -67,6 +75,17 @@ func main() {
 			log.Fatalf("Request failed: %s", err.Error())
 		}
 		fmt.Println(replyDevice)
+
+		mediaDev3 := media.NewMedia(client, "http://73.245.135.144:8062/onvif/services")
+
+		mediares, err := mediaDev3.GetVideoEncoderConfigurations(&media.GetVideoEncoderConfigurations{})
+		if err != nil {
+			if serr, ok := err.(*soap.SOAPFault); ok {
+				pretty.Println(serr)
+			}
+			log.Fatalf("Request failed: %s", err.Error())
+		}
+		fmt.Println(mediares)
 
 	}
 

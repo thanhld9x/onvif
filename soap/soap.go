@@ -8,7 +8,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -397,7 +396,7 @@ func (s *Client) call(ctx context.Context, xaddr string, soapAction string, requ
 	if err := encoder.Encode(envelope); err != nil {
 		return err
 	}
-	fmt.Println(buffer.String())
+	//fmt.Println(buffer.String())
 
 	if err := encoder.Flush(); err != nil {
 		return err
